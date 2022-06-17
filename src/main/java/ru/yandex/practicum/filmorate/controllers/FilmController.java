@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.InvalidFilmIdException;
+import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -45,7 +46,14 @@ public class FilmController {
             throw new FilmAlreadyExistException("Movie with specified id " +
                     film.getId() + " already in the database.");
         }
-        films.put(film.getId(), film);
+        if(films.size() == 0){
+            film.setId(1);
+        } else {
+            film.setId(films.size() + 1);
+        }
+        if(!films.containsKey(film.getId())) {
+            films.put(film.getId(), film);
+        }
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
 
@@ -58,7 +66,10 @@ public class FilmController {
         if(!validateFilm(film)){
             throw new ValidationException("Validate film fields error");
         }
-        films.put(film.getId(), film);
+        if(films.containsKey(film.getId())) {
+            film.setId(films.get(film.getId()).getId());
+            films.put(film.getId(), film);
+        }
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
 

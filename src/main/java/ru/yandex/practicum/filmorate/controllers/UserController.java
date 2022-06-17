@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class UserController {
 
-    private final Map<String, User> users = new HashMap<>();
+    private final Map<Integer, User> users = new HashMap<>();
 
     @GetMapping
     @ResponseBody
@@ -41,13 +41,15 @@ public class UserController {
         if(user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if(!users.containsKey(user.getEmail())) {
+        if(users.size() == 0){
+            user.setId(1);
+        } else {
+            user.setId(users.size() + 1);
+        }
+        if(!users.containsKey(user.getId())) {
             //throw new UserAlreadyExistException("User with email " +
             //        user.getEmail() + " already registered.");
-            user.setId(users.size() + 1);
-            users.put(user.getEmail(), user);
-        } else {
-            user.setId(users.get(user.getEmail()).getId());
+            users.put(user.getId(), user);
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -64,8 +66,9 @@ public class UserController {
         if(user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if(users.containsKey(user.getEmail())) {
-            users.put(user.getEmail(), user);
+        if(users.containsKey(user.getId())) {
+            user.setId(users.get(user.getId()).getId());
+            users.put(user.getId(), user);
         } else {
             throw new UserAlreadyExistException("User with email " +
                     user.getEmail() + " not registered.");
