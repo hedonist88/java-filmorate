@@ -36,6 +36,9 @@ public class FilmController {
     @PostMapping
     @ResponseBody
     public ResponseEntity<Film> create(@RequestBody Film film) {
+        if(film == null) {
+            return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
+        }
         if(film.getId() < 0) {
             throw new InvalidFilmIdException("Movie ID cannot be negative.");
         }
@@ -53,6 +56,7 @@ public class FilmController {
         }
         if(!films.containsKey(film.getId())) {
             films.put(film.getId(), film);
+            log.info("Add film {} with id {}", film.getName(), film.getId());
         }
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
@@ -60,8 +64,11 @@ public class FilmController {
     @PutMapping
     @ResponseBody
     public ResponseEntity<Film> put(@RequestBody Film film) {
+        if(film == null) {
+            return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
+        }
         if(film.getId() < 0) {
-            throw new InvalidFilmIdException("Movie ID cannot be negative");
+            throw new InvalidFilmIdException("Movie ID cannot be negative.");
         }
         if(!validateFilm(film)){
             throw new ValidationException("Validate film fields error");
@@ -69,6 +76,7 @@ public class FilmController {
         if(films.containsKey(film.getId())) {
             film.setId(films.get(film.getId()).getId());
             films.put(film.getId(), film);
+            log.info("Update film {} with id {}", film.getName(), film.getId());
         }
         return new ResponseEntity<>(film, HttpStatus.OK);
     }

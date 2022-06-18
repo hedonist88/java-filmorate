@@ -32,6 +32,9 @@ public class UserController {
     @PostMapping
     @ResponseBody
     public ResponseEntity<User> create(@RequestBody User user) {
+        if(user == null) {
+            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
+        }
         if(user.getEmail() == null || user.getEmail().isBlank()) {
             throw new InvalidEmailException("The email address cannot be empty.");
         }
@@ -50,6 +53,7 @@ public class UserController {
             //throw new UserAlreadyExistException("User with email " +
             //        user.getEmail() + " already registered.");
             users.put(user.getId(), user);
+            log.info("Add user {} with id {}", user.getLogin(), user.getId());
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -57,6 +61,9 @@ public class UserController {
     @PutMapping
     @ResponseBody
     public ResponseEntity<User> put(@RequestBody User user) {
+        if(user == null) {
+            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
+        }
         if(user.getEmail() == null || user.getEmail().isBlank()) {
             throw new InvalidEmailException("The email address cannot be empty.");
         }
@@ -69,9 +76,10 @@ public class UserController {
         if(users.containsKey(user.getId())) {
             user.setId(users.get(user.getId()).getId());
             users.put(user.getId(), user);
+            log.info("Update user {} with id {}", user.getLogin(), user.getId());
         } else {
-            throw new UserAlreadyExistException("User with email " +
-                    user.getEmail() + " not registered.");
+            log.info("User not registered {} with id {}", user.getLogin(), user.getId());
+            throw new UserAlreadyExistException("User not registered");
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -84,7 +92,7 @@ public class UserController {
             log.info("Wrong email {}", user.getEmail());
             result = false;
         }
-        if(user.getLogin().isBlank() || user.getLogin().matches("\\s+")){
+        if(user.getLogin().isBlank() || !user.getLogin().matches("^\\S*$")){
             log.info("Wrong login {} from user {}", user.getLogin(), user.getEmail());
             result = false;
         }
