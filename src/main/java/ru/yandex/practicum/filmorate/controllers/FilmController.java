@@ -4,20 +4,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
-import ru.yandex.practicum.filmorate.exception.InvalidFilmIdException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.util.Collection;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
 @Slf4j
+@Validated
 public class FilmController {
 
     private FilmService filmService;
@@ -28,64 +28,55 @@ public class FilmController {
     }
 
     @GetMapping
-    @ResponseBody
     public ResponseEntity<Collection<Film>> findAll() {
         return filmService.getAllFilms() != null
-                ? new ResponseEntity<>(filmService.getAllFilms(), HttpStatus.OK)
+                ? ResponseEntity.ok(filmService.getAllFilms())
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping(value = "/{id}")
-    @ResponseBody
-    public ResponseEntity<Film> findFilmById(@PathVariable(name = "id") int filmId)
+    public ResponseEntity<Film> findFilmById(@PathVariable(name = "id") long filmId)
     {
         if(filmId < 0) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(filmService.findFilmById(filmId), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.findFilmById(filmId));
     }
 
     @PostMapping
-    @ResponseBody
     public ResponseEntity<Film> create(@RequestBody Film film) {
-        if(film == null) {
-            return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(filmService.addFilm(film), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.addFilm(film));
     }
 
     @PutMapping
-    @ResponseBody
     public ResponseEntity<Film> put(@RequestBody Film film) {
-        if(film == null) {
-            return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(filmService.updateFilm(film), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.updateFilm(film));
     }
 
     @PutMapping(value = "/{id}/like/{userId}")
     public ResponseEntity<Film> putLike(
-            @PathVariable(name = "id") int filmId, @PathVariable(name = "userId") int userId) {
+            @PathVariable(name = "id") int filmId, @PathVariable(name = "userId") long userId) {
         if(filmId < 0 || userId < 0) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<Film>(filmService.addLike(filmId, userId), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.addLike(filmId, userId));
     }
 
     @DeleteMapping(value = "/{id}/like/{userId}")
     public ResponseEntity<Film> removeLike(
-            @PathVariable(name = "id") int filmId, @PathVariable(name = "userId") int userId) {
+            @PathVariable(name = "id") long filmId, @PathVariable(name = "userId") long userId) {
         if(filmId < 0 || userId < 0) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<Film>(filmService.removeLike(filmId, userId), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.removeLike(filmId, userId));
     }
 
     @GetMapping(value = "/popular")
     public ResponseEntity<Collection<Film>> getPopularFilms(
-            @RequestParam(name="count", defaultValue = "10") Integer count){
+            @Positive
+            @RequestParam(name="count", defaultValue = "10") int count){
         if(count < 1) count = 10;
-        return new ResponseEntity<Collection<Film>>(filmService.getTopLikedFilms(count), HttpStatus.OK);
+        return ResponseEntity.ok(filmService.getTopLikedFilms(count));
     }
 
 }

@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Data
 public class Film {
-    private int id;
+    private long id;
     @NotBlank
     private String name;
     @Size(min = 1, max = 200)
@@ -23,7 +23,7 @@ public class Film {
     @Min(1)
     private int duration;
     @JsonIgnore
-    private Set<Integer> likeUserIds = new HashSet<>();
+    private Set<Long> likeUserIds = new HashSet<>();
 
     @JsonIgnore
     public int getLikesCount(){
