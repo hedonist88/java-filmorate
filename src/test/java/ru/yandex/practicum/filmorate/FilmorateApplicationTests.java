@@ -11,8 +11,13 @@ import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
 import ru.yandex.practicum.filmorate.exception.InvalidFilmIdException;
 import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 
@@ -22,8 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 class FilmorateApplicationTests {
 
-	UserController userController = new UserController();
-	FilmController filmController = new FilmController();
+	UserController userController = new UserController(new UserService(new InMemoryUserStorage()));
+	FilmController filmController = new FilmController(
+			new FilmService(new InMemoryFilmStorage(),new InMemoryUserStorage()));
 
 	@Test
 	void contextLoads() {
@@ -60,7 +66,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.create(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -78,7 +84,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.create(user);
 		});
 
-		String expectedMessage = "The email address cannot be empty.";
+		String expectedMessage = ErrorMessage.EMPTY_EMAIL.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -96,7 +102,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.create(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -129,7 +135,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.create(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -147,7 +153,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.create(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -165,7 +171,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.put(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -183,7 +189,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.put(user);
 		});
 
-		String expectedMessage = "The email address cannot be empty.";
+		String expectedMessage = ErrorMessage.EMPTY_EMAIL.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -201,7 +207,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.put(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -219,7 +225,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity2 = userController.put(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -237,7 +243,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.put(user);
 		});
 
-		String expectedMessage = "Validate user fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -256,7 +262,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<User> responseEntity = userController.put(user2);
 		});
 
-		String expectedMessage = "User not registered";
+		String expectedMessage = ErrorMessage.USER_NOT_REGISTER.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -295,7 +301,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.create(film);
 		});
 
-		String expectedMessage = "Movie ID cannot be negative.";
+		String expectedMessage = ErrorMessage.WRONG_FILM_ID.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -314,7 +320,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.create(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -334,7 +340,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.create(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -353,7 +359,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.create(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -372,7 +378,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.create(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -392,7 +398,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.put(film);
 		});
 
-		String expectedMessage = "Movie ID cannot be negative.";
+		String expectedMessage = ErrorMessage.WRONG_FILM_ID.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -411,7 +417,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.put(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -431,7 +437,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.put(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -450,7 +456,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.put(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));
@@ -469,7 +475,7 @@ class FilmorateApplicationTests {
 			final ResponseEntity<Film> responseEntity = filmController.put(film);
 		});
 
-		String expectedMessage = "Validate film fields error";
+		String expectedMessage = ErrorMessage.VALIDATE_ERROR.getMessage();
 		String actualMessage = exception.getMessage();
 
 		assertTrue(actualMessage.contains(expectedMessage));

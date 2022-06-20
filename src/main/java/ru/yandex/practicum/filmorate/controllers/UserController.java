@@ -1,32 +1,45 @@
 package ru.yandex.practicum.filmorate.controllers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
-
-import java.time.LocalDate;
+import ru.yandex.practicum.filmorate.service.UserService;
 import java.util.*;
-import java.util.regex.Pattern;
+
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
 
-    private final Map<Integer, User> users = new HashMap<>();
+    private UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     @ResponseBody
     public ResponseEntity<Collection<User>> findAll() {
-        return users != null
-                ? new ResponseEntity<>(users.values(), HttpStatus.OK)
+        return userService.getAllUsers() != null
+                ? new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping(value = "/{id}")
+    @ResponseBody
+    public ResponseEntity<User> findUserById(@PathVariable(name = "id") int userId)
+    {
+        if(userId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(userService.findUserById(userId), HttpStatus.OK);
     }
 
     @PostMapping
@@ -35,27 +48,7 @@ public class UserController {
         if(user == null) {
             return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
         }
-        if(user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new InvalidEmailException("The email address cannot be empty.");
-        }
-        if(!validateUser(user)){
-            throw new ValidationException("Validate user fields error");
-        }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if(users.size() == 0){
-            user.setId(1);
-        } else {
-            user.setId(users.size() + 1);
-        }
-        if(!users.containsKey(user.getId())) {
-            //throw new UserAlreadyExistException("User with email " +
-            //        user.getEmail() + " already registered.");
-            users.put(user.getId(), user);
-            log.info("Add user {} with id {}", user.getLogin(), user.getId());
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return new ResponseEntity<>(userService.addUser(user), HttpStatus.OK);
     }
 
     @PutMapping
@@ -64,42 +57,43 @@ public class UserController {
         if(user == null) {
             return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
         }
-        if(user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new InvalidEmailException("The email address cannot be empty.");
-        }
-        if(!validateUser(user)){
-            throw new ValidationException("Validate user fields error");
-        }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if(users.containsKey(user.getId())) {
-            user.setId(users.get(user.getId()).getId());
-            users.put(user.getId(), user);
-            log.info("Update user {} with id {}", user.getLogin(), user.getId());
-        } else {
-            log.info("User not registered {} with id {}", user.getLogin(), user.getId());
-            throw new UserAlreadyExistException("User not registered");
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return new ResponseEntity<>(userService.updateUser(user), HttpStatus.OK);
     }
 
-    private boolean validateUser(User user){
-        boolean result = true;
-        final Pattern VALID_EMAIL_ADDRESS_REGEX =
-                Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-        if(user.getEmail().isBlank() || !VALID_EMAIL_ADDRESS_REGEX.matcher(user.getEmail()).find()){
-            log.info("Wrong email {}", user.getEmail());
-            result = false;
+    @PutMapping(value = "/{id}/friends/{friendId}")
+    public ResponseEntity<User> putUserFriend(
+            @PathVariable(name = "id") int userId ,@PathVariable(name = "friendId") int friendId) {
+        if(userId < 0 || friendId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        if(user.getLogin().isBlank() || !user.getLogin().matches("^\\S*$")){
-            log.info("Wrong login {} from user {}", user.getLogin(), user.getEmail());
-            result = false;
-        }
-        if(user.getBirthday().isAfter(LocalDate.now())){
-            log.info("Wrong date birthday {} from user {}", user.getBirthday(), user.getEmail());
-            result = false;
-        }
-        return result;
+        return new ResponseEntity<User>(userService.addFriend(userId, friendId), HttpStatus.OK);
     }
+
+    @DeleteMapping(value = "/{id}/friends/{friendId}")
+    public ResponseEntity<User> deleteUserFriend(
+            @PathVariable(name = "id") int userId ,@PathVariable(name = "friendId") int friendId) {
+        if(userId < 0 || friendId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<User>(userService.removeFriend(userId, friendId), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{id}/friends")
+    public ResponseEntity<Collection<User>> getUserFriends( @PathVariable(name = "id") int userId){
+        if(userId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<Collection<User>>(userService.findUserFriends(userId), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{id}/friends/common/{otherId}")
+    public ResponseEntity<Collection<User>> getCommonFriendsList(
+            @PathVariable(name = "id") int userId, @PathVariable(name = "otherId") int otherUserId){
+        if(userId < 0 || otherUserId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<Collection<User>>(
+                userService.findCommonFriendsList(userId, otherUserId), HttpStatus.OK);
+    }
+
 }

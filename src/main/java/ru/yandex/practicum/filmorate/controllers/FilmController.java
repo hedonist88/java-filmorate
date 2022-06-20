@@ -1,36 +1,48 @@
 package ru.yandex.practicum.filmorate.controllers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.InvalidFilmIdException;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-
-import java.time.LocalDate;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
 
-    private final Map<Integer, Film> films = new HashMap<>();
+    private FilmService filmService;
+
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     @GetMapping
     @ResponseBody
     public ResponseEntity<Collection<Film>> findAll() {
-        return films != null
-                ? new ResponseEntity<>(films.values(), HttpStatus.OK)
+        return filmService.getAllFilms() != null
+                ? new ResponseEntity<>(filmService.getAllFilms(), HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping(value = "/{id}")
+    @ResponseBody
+    public ResponseEntity<Film> findFilmById(@PathVariable(name = "id") int filmId)
+    {
+        if(filmId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(filmService.findFilmById(filmId), HttpStatus.OK);
     }
 
     @PostMapping
@@ -39,26 +51,7 @@ public class FilmController {
         if(film == null) {
             return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
         }
-        if(film.getId() < 0) {
-            throw new InvalidFilmIdException("Movie ID cannot be negative.");
-        }
-        if(!validateFilm(film)){
-            throw new ValidationException("Validate film fields error");
-        }
-        if(films.containsKey(film.getId())) {
-            throw new FilmAlreadyExistException("Movie with specified id " +
-                    film.getId() + " already in the database.");
-        }
-        if(films.size() == 0){
-            film.setId(1);
-        } else {
-            film.setId(films.size() + 1);
-        }
-        if(!films.containsKey(film.getId())) {
-            films.put(film.getId(), film);
-            log.info("Add film {} with id {}", film.getName(), film.getId());
-        }
-        return new ResponseEntity<>(film, HttpStatus.OK);
+        return new ResponseEntity<>(filmService.addFilm(film), HttpStatus.OK);
     }
 
     @PutMapping
@@ -67,39 +60,32 @@ public class FilmController {
         if(film == null) {
             return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
         }
-        if(film.getId() < 0) {
-            throw new InvalidFilmIdException("Movie ID cannot be negative.");
-        }
-        if(!validateFilm(film)){
-            throw new ValidationException("Validate film fields error");
-        }
-        if(films.containsKey(film.getId())) {
-            film.setId(films.get(film.getId()).getId());
-            films.put(film.getId(), film);
-            log.info("Update film {} with id {}", film.getName(), film.getId());
-        }
-        return new ResponseEntity<>(film, HttpStatus.OK);
+        return new ResponseEntity<>(filmService.updateFilm(film), HttpStatus.OK);
     }
 
-    private boolean validateFilm(Film film){
-        boolean result = true;
-
-        if(film.getName() == null || film.getName().isBlank()){
-            log.info("Wrong name {} from film {}", film.getName(), film.getId());
-            result = false;
+    @PutMapping(value = "/{id}/like/{userId}")
+    public ResponseEntity<Film> putLike(
+            @PathVariable(name = "id") int filmId, @PathVariable(name = "userId") int userId) {
+        if(filmId < 0 || userId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        if(film.getDescription().length() > 200){
-            log.info("Very long description from film {}", film.getId());
-            result = false;
-        }
-        if(film.getReleaseDate().isBefore(LocalDate.of(1895,12,28))){
-            log.info("Wrong release date {} from film {}", film.getReleaseDate(), film.getId());
-            result = false;
-        }
-        if(film.getDuration() < 0){
-            log.info("Wrong duration {} from film {}", film.getDuration(), film.getId());
-            result = false;
-        }
-        return result;
+        return new ResponseEntity<Film>(filmService.addLike(filmId, userId), HttpStatus.OK);
     }
+
+    @DeleteMapping(value = "/{id}/like/{userId}")
+    public ResponseEntity<Film> removeLike(
+            @PathVariable(name = "id") int filmId, @PathVariable(name = "userId") int userId) {
+        if(filmId < 0 || userId < 0) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<Film>(filmService.removeLike(filmId, userId), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/popular")
+    public ResponseEntity<Collection<Film>> getPopularFilms(
+            @RequestParam(name="count", defaultValue = "10") Integer count){
+        if(count < 1) count = 10;
+        return new ResponseEntity<Collection<Film>>(filmService.getTopLikedFilms(count), HttpStatus.OK);
+    }
+
 }
