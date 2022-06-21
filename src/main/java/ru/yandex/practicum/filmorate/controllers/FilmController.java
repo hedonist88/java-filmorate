@@ -6,11 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.interfaces.FilmServiceImpl;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.util.Collection;
 
@@ -20,7 +18,7 @@ import java.util.Collection;
 @Validated
 public class FilmController {
 
-    private FilmService filmService;
+    private FilmServiceImpl filmService;
 
     @Autowired
     public FilmController(FilmService filmService) {
@@ -29,9 +27,7 @@ public class FilmController {
 
     @GetMapping
     public ResponseEntity<Collection<Film>> findAll() {
-        return filmService.getAllFilms() != null
-                ? ResponseEntity.ok(filmService.getAllFilms())
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(filmService.findAllFilms());
     }
 
     @GetMapping(value = "/{id}")
@@ -68,15 +64,14 @@ public class FilmController {
         if(filmId < 0 || userId < 0) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(filmService.removeLike(filmId, userId));
+            return ResponseEntity.ok(filmService.removeLike(filmId, userId));
     }
 
     @GetMapping(value = "/popular")
-    public ResponseEntity<Collection<Film>> getPopularFilms(
+    public ResponseEntity<Collection<Film>> findPopularFilms(
             @Positive
             @RequestParam(name="count", defaultValue = "10") int count){
-        if(count < 1) count = 10;
-        return ResponseEntity.ok(filmService.getTopLikedFilms(count));
+        return ResponseEntity.ok(filmService.findTopLikedFilms(count));
     }
 
 }

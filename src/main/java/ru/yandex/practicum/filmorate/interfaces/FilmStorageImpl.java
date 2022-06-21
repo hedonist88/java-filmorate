@@ -1,16 +1,16 @@
 package ru.yandex.practicum.filmorate.interfaces;
 
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
-public interface FilmStorage {
+public interface FilmStorageImpl {
     Map<Long, Film> getAllFilms();
-    Film addFilm(Film film);
-    Film updateFilm(Film film);
+    Film add(Film film);
+    Film update(Film film);
     Collection<Film> getTopLikedFilms(int size);
-    Film findFilmById(long filmId);
+    Optional<Film> getFilmById(long filmId);
     void removeFilmById(long filmId);
 }

@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.controllers.FilmController;
 import ru.yandex.practicum.filmorate.controllers.UserController;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
+import ru.yandex.practicum.filmorate.interfaces.UserStorageImpl;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -17,6 +18,8 @@ import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,12 +31,9 @@ class FilmorateApplicationTests {
 	FilmController filmController;
 
 	public FilmorateApplicationTests() {
-		FilmService filmService = new FilmService();
-		filmService.setFilmStorage(new InMemoryFilmStorage());
-		filmService.setUserStorage(new InMemoryUserStorage());
+		FilmService filmService = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
 		filmController = new FilmController(filmService);
-		UserService userService = new UserService();
-		userService.setUserStorage(new InMemoryUserStorage());
+		UserService userService = new UserService(new InMemoryUserStorage());
 		userController = new UserController(userService);
 	}
 
@@ -338,7 +338,7 @@ class FilmorateApplicationTests {
 	void updateFilmWithWrongId(){
 		Exception exception = assertThrows(NotFoundException.class, () -> {
 			Film film = new Film();
-			film.setId(-1);
+			film.setId(-666);
 			film.setName("Pulp fiction");
 			film.setDescription("Pulp Fiction is a 1994 American black comedy crime film written " +
 					"and directed by Quentin Tarantino, who conceived it with Roger Avary.");

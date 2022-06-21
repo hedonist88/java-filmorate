@@ -24,6 +24,10 @@ public class Film {
     private int duration;
     @JsonIgnore
     private Set<Long> likeUserIds = new HashSet<>();
+    @JsonIgnore
+    private Genre genre;
+    @JsonIgnore
+    private Mpa mpa;
 
     @JsonIgnore
     public int getLikesCount(){

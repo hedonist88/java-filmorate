@@ -1,9 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
-import ru.yandex.practicum.filmorate.interfaces.UserStorage;
+import ru.yandex.practicum.filmorate.interfaces.UserStorageImpl;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.HashMap;
@@ -11,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-public class InMemoryUserStorage implements UserStorage {
+public class InMemoryUserStorage implements UserStorageImpl {
 
     private final Map<Long, User> users = new HashMap<>();
     protected int lastUserId = 0;
@@ -22,20 +20,19 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User findUserById(long userId){
-        return Optional.ofNullable(users.get(userId)).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+    public Optional<User> getUserById(long userId){
+        return Optional.ofNullable(users.get(userId));
     }
 
     @Override
-    public User addUser(User user){
+    public User add(User user){
         user.setId(getLastUserId());
         users.put(user.getId(),user);
         return user;
     }
 
     @Override
-    public User updateUser(User user){
+    public User update(User user){
         users.put(user.getId(),user);
         return user;
     }

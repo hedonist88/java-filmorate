@@ -4,14 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
-import ru.yandex.practicum.filmorate.exception.InvalidFilmIdException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
 import ru.yandex.practicum.filmorate.helpers.LogMessage;
-import ru.yandex.practicum.filmorate.interfaces.FilmStorageService;
-import ru.yandex.practicum.filmorate.interfaces.UserSocial;
-import ru.yandex.practicum.filmorate.interfaces.UserStorageService;
+import ru.yandex.practicum.filmorate.interfaces.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
@@ -21,30 +18,23 @@ import java.util.*;
 
 @Service
 @Slf4j
-public class FilmService implements UserSocial, FilmStorageService, UserStorageService {
+public class FilmService implements FilmServiceImpl {
 
-    private InMemoryFilmStorage filmStorage;
-    private InMemoryUserStorage userStorage;
+    private FilmStorageImpl filmStorage;
+    private UserStorageImpl userStorage;
 
-    @Override
     @Autowired
-    public void setFilmStorage(InMemoryFilmStorage filmStorage) {
+    public FilmService(FilmStorageImpl filmStorage, UserStorageImpl userStorage) {
         this.filmStorage = filmStorage;
-    }
-
-    @Override
-    @Autowired
-    public void setUserStorage(InMemoryUserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public Collection<Film> getAllFilms() {
-        if(filmStorage.getAllFilms().size() == 0){
-            return Collections.emptyList();
-        }
+    @Override
+    public Collection<Film> findAllFilms() {
         return filmStorage.getAllFilms().values();
     }
 
+    @Override
     public Film addFilm(Film film) {
         if(!validateFilm(film)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
@@ -53,53 +43,57 @@ public class FilmService implements UserSocial, FilmStorageService, UserStorageS
             throw new FilmAlreadyExistException(ErrorMessage.FILM_IS_ALREADY.getMessage() + " " +
                     film.getId());
         }
-        Film addfilm = null;
-        if(!filmStorage.getAllFilms().containsKey(film.getId())) {
-            addfilm = filmStorage.addFilm(film);
+        Film addFilm = filmStorage.add(film);
             log.info(LogMessage.FILM_ADD.getMessage() + " {} {}", film.getName(), film.getId());
-        }
-        return addfilm;
+        return addFilm;
     }
 
+    @Override
     public Film updateFilm(Film film) {
         if(!validateFilm(film)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
-        filmStorage.findFilmById(film.getId());
-        if(filmStorage.getAllFilms().containsKey(film.getId())) {
-            filmStorage.updateFilm(film);
-            log.info(LogMessage.FILM_UPDATE.getMessage() + " {} {}", film.getName(), film.getId());
-        } else {
-            throw new NotFoundException(ErrorMessage.FILMS_NOT_FOUND.getMessage());
-        }
+        filmStorage.getFilmById(film.getId()).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.FILMS_NOT_FOUND.getMessage()));
+        filmStorage.update(film);
+        log.info(LogMessage.FILM_UPDATE.getMessage() + " {} {}", film.getName(), film.getId());
         return film;
     }
 
-    public Collection<Film> getTopLikedFilms(int count){
+    @Override
+    public Collection<Film> findTopLikedFilms(int count){
         if(filmStorage.getAllFilms().size() == 0){
             return Collections.emptyList();
         }
         return filmStorage.getTopLikedFilms(count);
     }
 
+    @Override
     public Film findFilmById(long filmId){
-        return filmStorage.getFilmById(filmId);
+        return filmStorage.getFilmById(filmId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.FILMS_NOT_FOUND.getMessage()));
     }
 
     @Override
     public Film addLike(long filmId, long userId){
-        userStorage.findUserById(userId);
-        filmStorage.getFilmById(filmId).getLikeUserIds().add(userId);
-        return filmStorage.getFilmById(filmId);
+        userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));;
+        Film film = filmStorage.getFilmById(filmId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.FILMS_NOT_FOUND.getMessage()));
+        film.getLikeUserIds().add(userId);
+        return film;
     }
 
     @Override
     public Film removeLike(long filmId, long userId){
-        userStorage.findUserById(userId);
-        if(!filmStorage.getFilmById(filmId).getLikeUserIds().contains(userId)){
-            filmStorage.getFilmById(filmId).getLikeUserIds().remove(userId);
+        userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));;
+        Film film = filmStorage.getFilmById(filmId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.FILMS_NOT_FOUND.getMessage()));
+        if(!film.getLikeUserIds().contains(userId)){
+            film.getLikeUserIds().remove(userId);
         }
-        return filmStorage.getFilmById(filmId);
+        return film;
     }
 
     private boolean validateFilm(Film film){

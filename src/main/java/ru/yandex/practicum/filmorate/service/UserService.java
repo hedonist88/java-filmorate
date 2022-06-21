@@ -8,7 +8,8 @@ import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
 import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.helpers.LogMessage;
-import ru.yandex.practicum.filmorate.interfaces.UserStorageService;
+import ru.yandex.practicum.filmorate.interfaces.UserServiceImpl;
+import ru.yandex.practicum.filmorate.interfaces.UserStorageImpl;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -22,44 +23,40 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class UserService implements UserStorageService {
+public class UserService implements UserServiceImpl {
 
-    private InMemoryUserStorage userStorage;
+    private UserStorageImpl userStorage;
+    final Pattern VALID_EMAIL_ADDRESS_REGEX =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
-    @Override
     @Autowired
-    public void setUserStorage(InMemoryUserStorage userStorage) {
+    public UserService(UserStorageImpl userStorage) {
         this.userStorage = userStorage;
     }
 
+    @Override
     public User findUserById(long userId){
-        return userStorage.findUserById(userId);
+        return userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
     }
 
+    @Override
     public User addUser(User user){
         if(!validateUser(user)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        User adduser = null;
-        if(!userStorage.getAllUsers().containsKey(user.getId())) {
-            adduser = userStorage.addUser(user);
-            log.info(LogMessage.USER_ADD.getMessage() + " {} {}", user.getLogin(), user.getId());
-        }
-        return adduser;
+        User addUser = userStorage.add(user);
+        log.info(LogMessage.USER_ADD.getMessage() + " {} {}", user.getLogin(), user.getId());
+        return addUser;
     }
 
+    @Override
     public User updateUser(User user){
         if(!validateUser(user)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
         if(userStorage.getAllUsers().containsKey(user.getId())) {
-            userStorage.updateUser(user);
+            userStorage.update(user);
             log.info(LogMessage.USER_UPDATE.getMessage() + " {} {}", user.getLogin(), user.getId());
         } else {
             log.info(ErrorMessage.USER_NOT_REGISTER.getMessage() + " {} {}", user.getLogin(), user.getId());
@@ -68,55 +65,68 @@ public class UserService implements UserStorageService {
         return user;
     }
 
-    public Collection<User> getAllUsers() {
-        if(userStorage.getAllUsers().size() == 0){
-            throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
-        }
+    @Override
+    public Collection<User> findAllUsers() {
         return userStorage.getAllUsers().values();
     }
 
+    @Override
     public User addFriend(long userId, long friendId){
-        userStorage.findUserById(userId).getFriendsIds().add(friendId);
-        userStorage.findUserById(friendId).getFriendsIds().add(userId);
-        return userStorage.findUserById(userId);
+        User user = userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        user.getFriendsIds().add(friendId);
+        User friend = userStorage.getUserById(friendId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        friend.getFriendsIds().add(userId);
+        return user;
     }
 
+    @Override
     public User removeFriend(long userId, long friendId){
-        userStorage.findUserById(userId).getFriendsIds().remove(friendId);
-        userStorage.findUserById(friendId).getFriendsIds().remove(userId);
-        return userStorage.findUserById(userId);
+        User user = userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        user.getFriendsIds().remove(friendId);
+        User friend = userStorage.getUserById(friendId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        friend.getFriendsIds().remove(userId);
+        return user;
     }
 
+    @Override
     public Collection<User> findUserFriends(long userId){
-        if(userStorage.findUserById(userId).getFriendsIds().size() == 0){
+        User user = userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        if(user.getFriendsIds().size() == 0){
             throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
         }
-        return userStorage.findUserById(userId)
-                .getFriendsIds()
+        return user.getFriendsIds()
                 .stream()
-                .map(id -> { User u = userStorage.findUserById(id); return u; })
+                .map(id -> { User u = userStorage.getUserById(id)
+                        .orElseThrow(() -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+                        return u; })
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Collection<User> findCommonFriendsList(long userId, long otherUserId){
-        if(!userStorage.getAllUsers().containsKey(otherUserId)){
-            throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
-        }
-        if(userStorage.findUserById(otherUserId).getFriendsIds() == null
-                || userStorage.findUserById(otherUserId).getFriendsIds().size() == 0){
+        User user = userStorage.getUserById(userId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User otherUser = userStorage.getUserById(otherUserId).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        if(otherUser.getFriendsIds().size() == 0){
             return Collections.emptyList();
         }
-        Set<Long> crossing = new HashSet<>(userStorage.findUserById(otherUserId).getFriendsIds());
-        crossing.retainAll(userStorage.findUserById(userId).getFriendsIds());
+        Set<Long> crossing = new HashSet<>(otherUser.getFriendsIds());
+        crossing.retainAll(user.getFriendsIds());
         return crossing.stream()
-                .map(id -> { User u = userStorage.findUserById(id); return u; })
+                .map(id -> { User u = userStorage.getUserById(id)
+                        .orElseThrow(() -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+                    return u; })
                 .collect(Collectors.toList());
     }
 
     private boolean validateUser(User user){
         boolean result = true;
-        final Pattern VALID_EMAIL_ADDRESS_REGEX =
-                Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
         if(user.getEmail() == null || user.getEmail().isBlank()) {
             throw new InvalidEmailException(ErrorMessage.EMPTY_EMAIL.getMessage());
         }
@@ -127,6 +137,9 @@ public class UserService implements UserStorageService {
         if(user.getLogin().isBlank() || !user.getLogin().matches("^\\S*$")){
             log.info(ErrorMessage.WRONG_LOGIN.getMessage() + " {} {}", user.getLogin(), user.getEmail());
             result = false;
+        }
+        if(user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
         }
         if(user.getBirthday().isAfter(LocalDate.now())){
             log.info(ErrorMessage.WRONG_BIRTDAY.getMessage() + " {} {}", user.getBirthday(), user.getEmail());

@@ -3,12 +3,10 @@ package ru.yandex.practicum.filmorate.controllers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.*;
+import ru.yandex.practicum.filmorate.interfaces.UserServiceImpl;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 import java.util.*;
 
 
@@ -17,26 +15,21 @@ import java.util.*;
 @Slf4j
 public class UserController {
 
-    private UserService userService;
+    private UserServiceImpl userService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
     @GetMapping
     public ResponseEntity<Collection<User>> findAll() {
-        return userService.getAllUsers() != null
-                ? ResponseEntity.ok(userService.getAllUsers())
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(userService.findAllUsers());
     }
 
     @GetMapping(value = "/{id}")
     public ResponseEntity<User> findUserById(@PathVariable(name = "id") long userId)
     {
-        if(userId < 0) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        }
         return ResponseEntity.ok(userService.findUserById(userId));
     }
 
