@@ -9,11 +9,11 @@ import ru.yandex.practicum.filmorate.controllers.FilmController;
 import ru.yandex.practicum.filmorate.controllers.UserController;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
-import ru.yandex.practicum.filmorate.interfaces.UserStorageImpl;
+import ru.yandex.practicum.filmorate.interfaces.FilmStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
+import ru.yandex.practicum.filmorate.service.UserServiceImpl;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -31,9 +31,9 @@ class FilmorateApplicationTests {
 	FilmController filmController;
 
 	public FilmorateApplicationTests() {
-		FilmService filmService = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
+		FilmServiceImpl filmService = new FilmServiceImpl(new InMemoryFilmStorage(), new InMemoryUserStorage());
 		filmController = new FilmController(filmService);
-		UserService userService = new UserService(new InMemoryUserStorage());
+		UserServiceImpl userService = new UserServiceImpl(new InMemoryUserStorage());
 		userController = new UserController(userService);
 	}
 

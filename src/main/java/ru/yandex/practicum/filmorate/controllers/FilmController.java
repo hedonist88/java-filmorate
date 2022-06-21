@@ -6,9 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.interfaces.FilmServiceImpl;
+import ru.yandex.practicum.filmorate.interfaces.FilmService;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.constraints.Positive;
 import java.util.Collection;
 
@@ -18,7 +17,7 @@ import java.util.Collection;
 @Validated
 public class FilmController {
 
-    private FilmServiceImpl filmService;
+    private FilmService filmService;
 
     @Autowired
     public FilmController(FilmService filmService) {

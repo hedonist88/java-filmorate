@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
-public interface FilmStorageImpl {
+public interface FilmStorage {
     Map<Long, Film> getAllFilms();
     Film add(Film film);
     Film update(Film film);

@@ -8,10 +8,9 @@ import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
 import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.helpers.LogMessage;
-import ru.yandex.practicum.filmorate.interfaces.UserServiceImpl;
-import ru.yandex.practicum.filmorate.interfaces.UserStorageImpl;
+import ru.yandex.practicum.filmorate.interfaces.UserService;
+import ru.yandex.practicum.filmorate.interfaces.UserStorage;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -23,14 +22,14 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class UserService implements UserServiceImpl {
+public class UserServiceImpl implements UserService {
 
-    private UserStorageImpl userStorage;
-    final Pattern VALID_EMAIL_ADDRESS_REGEX =
+    private UserStorage userStorage;
+    private final Pattern VALID_EMAIL_ADDRESS_REGEX =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
     @Autowired
-    public UserService(UserStorageImpl userStorage) {
+    public UserServiceImpl(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -72,55 +71,46 @@ public class UserService implements UserServiceImpl {
 
     @Override
     public User addFriend(long userId, long friendId){
-        User user = userStorage.getUserById(userId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User user = findUserById(userId);
         user.getFriendsIds().add(friendId);
-        User friend = userStorage.getUserById(friendId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User friend = findUserById(friendId);
         friend.getFriendsIds().add(userId);
         return user;
     }
 
     @Override
     public User removeFriend(long userId, long friendId){
-        User user = userStorage.getUserById(userId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User user = findUserById(userId);
         user.getFriendsIds().remove(friendId);
-        User friend = userStorage.getUserById(friendId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User friend = findUserById(friendId);
         friend.getFriendsIds().remove(userId);
         return user;
     }
 
     @Override
     public Collection<User> findUserFriends(long userId){
-        User user = userStorage.getUserById(userId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User user = findUserById(userId);
         if(user.getFriendsIds().size() == 0){
             throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
         }
         return user.getFriendsIds()
                 .stream()
-                .map(id -> { User u = userStorage.getUserById(id)
-                        .orElseThrow(() -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+                .map(id -> { User u = findUserById(id);
                         return u; })
                 .collect(Collectors.toList());
     }
 
     @Override
     public Collection<User> findCommonFriendsList(long userId, long otherUserId){
-        User user = userStorage.getUserById(userId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
-        User otherUser = userStorage.getUserById(otherUserId).orElseThrow(
-                () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+        User user = findUserById(userId);
+        User otherUser = findUserById(otherUserId);
         if(otherUser.getFriendsIds().size() == 0){
             return Collections.emptyList();
         }
         Set<Long> crossing = new HashSet<>(otherUser.getFriendsIds());
         crossing.retainAll(user.getFriendsIds());
         return crossing.stream()
-                .map(id -> { User u = userStorage.getUserById(id)
-                        .orElseThrow(() -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
+                .map(id -> { User u = findUserById(id);
                     return u; })
                 .collect(Collectors.toList());
     }

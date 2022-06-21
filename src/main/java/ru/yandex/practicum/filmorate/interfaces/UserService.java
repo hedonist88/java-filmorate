@@ -5,7 +5,7 @@ import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.util.Collection;
 
-public interface UserServiceImpl {
+public interface UserService {
     Collection<User>  findAllUsers();
     User findUserById(long userId);
     User addUser(User user);

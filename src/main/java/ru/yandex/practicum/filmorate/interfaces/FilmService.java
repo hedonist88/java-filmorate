@@ -5,7 +5,7 @@ import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.util.Collection;
 
-public interface FilmServiceImpl {
+public interface FilmService {
     Collection<Film> findAllFilms();
     Film findFilmById(long filmId);
     Film addFilm(Film film);
