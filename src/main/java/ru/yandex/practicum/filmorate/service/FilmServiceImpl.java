@@ -105,10 +105,6 @@ public class FilmServiceImpl implements FilmService {
             log.info(ErrorMessage.WRONG_FILM_RELEASE_DATE.getMessage() + " {} {}", film.getReleaseDate(), film.getId());
             result = false;
         }
-        if(film.getDuration() < 0){
-            log.info(ErrorMessage.WRONG_FILM_DURATION.getMessage() + " {} {}", film.getDuration(), film.getId());
-            result = false;
-        }
         return result;
     }
 }

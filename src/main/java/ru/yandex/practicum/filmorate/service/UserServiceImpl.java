@@ -10,13 +10,11 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.helpers.LogMessage;
 import ru.yandex.practicum.filmorate.interfaces.UserService;
 import ru.yandex.practicum.filmorate.interfaces.UserStorage;
+import ru.yandex.practicum.filmorate.model.FriendStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -54,6 +52,7 @@ public class UserServiceImpl implements UserService {
         if(!validateUser(user)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
+        findUserById(user.getId());
         if(userStorage.getAllUsers().containsKey(user.getId())) {
             userStorage.update(user);
             log.info(LogMessage.USER_UPDATE.getMessage() + " {} {}", user.getLogin(), user.getId());
@@ -72,17 +71,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public User addFriend(long userId, long friendId){
         User user = findUserById(userId);
-        user.getFriendsIds().add(friendId);
         User friend = findUserById(friendId);
-        friend.getFriendsIds().add(userId);
+        user.getFriendsIds().put(friendId, FriendStatus.CONFIRMED);
+        friend.getFriendsIds().put(userId, FriendStatus.CONFIRMED);
         return user;
     }
 
     @Override
     public User removeFriend(long userId, long friendId){
         User user = findUserById(userId);
-        user.getFriendsIds().remove(friendId);
         User friend = findUserById(friendId);
+        user.getFriendsIds().remove(friendId);
         friend.getFriendsIds().remove(userId);
         return user;
     }
@@ -93,7 +92,7 @@ public class UserServiceImpl implements UserService {
         if(user.getFriendsIds().size() == 0){
             throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
         }
-        return user.getFriendsIds()
+        return user.getFriendsIds().keySet()
                 .stream()
                 .map(id -> { User u = findUserById(id);
                         return u; })
@@ -107,8 +106,8 @@ public class UserServiceImpl implements UserService {
         if(otherUser.getFriendsIds().size() == 0){
             return Collections.emptyList();
         }
-        Set<Long> crossing = new HashSet<>(otherUser.getFriendsIds());
-        crossing.retainAll(user.getFriendsIds());
+        Set<Long> crossing = new HashSet<>(otherUser.getFriendsIds().keySet());
+        crossing.retainAll(user.getFriendsIds().keySet());
         return crossing.stream()
                 .map(id -> { User u = findUserById(id);
                     return u; })

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -63,6 +64,15 @@ public class GlobalExceptionHandler{
 
     @ExceptionHandler
     public ResponseEntity<Map<String, String>>  handleServerError(final Error e) {
+        return new ResponseEntity<Map<String, String>>(
+                Map.of(
+                        "Internal Server Error", e.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler( MethodArgumentNotValidException.class)
+    protected ResponseEntity<Map<String, String>>  argumentError(final Error e)
+    {
         return new ResponseEntity<Map<String, String>>(
                 Map.of(
                         "Internal Server Error", e.getMessage()),
