@@ -1,105 +1,73 @@
 package ru.yandex.practicum.filmorate.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.InvalidEmailException;
-import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.interfaces.UserService;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
+import javax.validation.Valid;
 import java.util.*;
-import java.util.regex.Pattern;
+
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@Validated
 public class UserController {
 
-    private final Map<Integer, User> users = new HashMap<>();
+    private UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
-    @ResponseBody
     public ResponseEntity<Collection<User>> findAll() {
-        return users != null
-                ? new ResponseEntity<>(users.values(), HttpStatus.OK)
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<User> findUserById(@PathVariable(name = "id") long userId)
+    {
+        return ResponseEntity.ok(userService.findUserById(userId));
     }
 
     @PostMapping
-    @ResponseBody
-    public ResponseEntity<User> create(@RequestBody User user) {
-        if(user == null) {
-            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
-        }
-        if(user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new InvalidEmailException("The email address cannot be empty.");
-        }
-        if(!validateUser(user)){
-            throw new ValidationException("Validate user fields error");
-        }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if(users.size() == 0){
-            user.setId(1);
-        } else {
-            user.setId(users.size() + 1);
-        }
-        if(!users.containsKey(user.getId())) {
-            //throw new UserAlreadyExistException("User with email " +
-            //        user.getEmail() + " already registered.");
-            users.put(user.getId(), user);
-            log.info("Add user {} with id {}", user.getLogin(), user.getId());
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
+    public ResponseEntity<User> create(@Valid @RequestBody User user) {
+        return ResponseEntity.ok(userService.addUser(user));
     }
 
     @PutMapping
-    @ResponseBody
-    public ResponseEntity<User> put(@RequestBody User user) {
-        if(user == null) {
-            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
-        }
-        if(user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new InvalidEmailException("The email address cannot be empty.");
-        }
-        if(!validateUser(user)){
-            throw new ValidationException("Validate user fields error");
-        }
-        if(user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if(users.containsKey(user.getId())) {
-            user.setId(users.get(user.getId()).getId());
-            users.put(user.getId(), user);
-            log.info("Update user {} with id {}", user.getLogin(), user.getId());
-        } else {
-            log.info("User not registered {} with id {}", user.getLogin(), user.getId());
-            throw new UserAlreadyExistException("User not registered");
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
+    public ResponseEntity<User> put(@Valid @RequestBody User user) {
+        return ResponseEntity.ok(userService.updateUser(user));
     }
 
-    private boolean validateUser(User user){
-        boolean result = true;
-        final Pattern VALID_EMAIL_ADDRESS_REGEX =
-                Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-        if(user.getEmail().isBlank() || !VALID_EMAIL_ADDRESS_REGEX.matcher(user.getEmail()).find()){
-            log.info("Wrong email {}", user.getEmail());
-            result = false;
-        }
-        if(user.getLogin().isBlank() || !user.getLogin().matches("^\\S*$")){
-            log.info("Wrong login {} from user {}", user.getLogin(), user.getEmail());
-            result = false;
-        }
-        if(user.getBirthday().isAfter(LocalDate.now())){
-            log.info("Wrong date birthday {} from user {}", user.getBirthday(), user.getEmail());
-            result = false;
-        }
-        return result;
+    @PutMapping(value = "/{id}/friends/{friendId}")
+    public ResponseEntity<User> putUserFriend(
+            @PathVariable(name = "id") long userId ,
+            @PathVariable(name = "friendId") long friendId) {
+        return ResponseEntity.ok(userService.addFriend(userId, friendId));
     }
+
+    @DeleteMapping(value = "/{id}/friends/{friendId}")
+    public ResponseEntity<User> deleteUserFriend(
+            @PathVariable(name = "id") long userId ,@PathVariable(name = "friendId") long friendId) {
+        return ResponseEntity.ok(userService.removeFriend(userId, friendId));
+    }
+
+    @GetMapping(value = "/{id}/friends")
+    public ResponseEntity<Collection<User>> getUserFriends( @PathVariable(name = "id") long userId){
+        return ResponseEntity.ok(userService.findUserFriends(userId));
+    }
+
+    @GetMapping(value = "/{id}/friends/common/{otherId}")
+    public ResponseEntity<Collection<User>> getCommonFriendsList(
+            @PathVariable(name = "id") int userId, @PathVariable(name = "otherId") int otherUserId){
+        return ResponseEntity.ok(userService.findCommonFriendsList(userId, otherUserId));
+    }
+
 }
