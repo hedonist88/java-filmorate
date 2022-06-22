@@ -1,2 +1,5 @@
 # java-filmorate
 Template repository for Filmorate project.
+
+**ER-диаграмма базы данных**
+![This is an image](http://cs91106.tmweb.ru/storage/db_scheme.png)
