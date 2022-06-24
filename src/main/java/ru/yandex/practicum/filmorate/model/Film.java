@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
 import lombok.Data;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.validation.annotation.Validated;

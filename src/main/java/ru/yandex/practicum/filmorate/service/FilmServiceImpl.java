@@ -22,15 +22,30 @@ import java.util.*;
 public class FilmServiceImpl implements FilmService {
 
     private FilmStorage filmStorage;
-
     private UserStorage userStorage;
+    private GenreStorage genreStorage;
+    private MpaStorage mpaStorage;
+    private LikeStorage likeStorage;
 
-    @Autowired
+
     public FilmServiceImpl(
-            @Qualifier("filmDbStorage") FilmStorage filmStorage,
+             FilmStorage filmStorage,
             @Qualifier("userDbStorage")UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+    }
+
+    @Autowired
+    public FilmServiceImpl(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                           @Qualifier("userDbStorage") UserStorage userStorage,
+                           @Qualifier("genreDbStorage") GenreStorage genreStorage,
+                           @Qualifier("mpaDbStorage") MpaStorage mpaStorage,
+                           @Qualifier("likeDbStorage") LikeStorage likeStorage) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.genreStorage = genreStorage;
+        this.mpaStorage = mpaStorage;
+        this.likeStorage = likeStorage;
     }
 
     @Override
@@ -83,7 +98,7 @@ public class FilmServiceImpl implements FilmService {
                 () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
         Film film = findFilmById(filmId);
         if(!film.getLikeUserIds().contains(userId)) {
-            filmStorage.putLike(filmId, userId);
+            likeStorage.putLike(filmId, userId);
         }
         return film;
     }
@@ -94,28 +109,28 @@ public class FilmServiceImpl implements FilmService {
                 () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
         Film film = findFilmById(filmId);
         if(film.getLikeUserIds().contains(userId)){
-            filmStorage.deleteLike(filmId, userId);
+            likeStorage.deleteLike(filmId, userId);
         }
         return film;
     }
 
     public Collection<Mpa> findAllMpa() {
-        return filmStorage.getAllMpa();
+        return mpaStorage.getAllMpa();
     }
 
     public Mpa findMpaById(int id){
-        return filmStorage.getMpaById(id).orElseThrow(
+        return mpaStorage.getMpaById(id).orElseThrow(
                 () -> new NotFoundException(ErrorMessage.MPA_NOT_FOUND.getMessage()));
     }
 
     @Override
     public Collection<Genre> findAllGenres() {
-        return filmStorage.getAllGenres();
+        return genreStorage.getAllGenres();
     }
 
     @Override
     public Genre findGenreById(int id) {
-        return filmStorage.getGenreById(id).orElseThrow(
+        return genreStorage.getGenreById(id).orElseThrow(
                 () -> new NotFoundException(ErrorMessage.GENRE_NOT_FOUND.getMessage()));
     }
 

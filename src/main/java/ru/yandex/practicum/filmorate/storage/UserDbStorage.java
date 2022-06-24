@@ -3,8 +3,9 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
@@ -79,6 +80,16 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User add(User user) {
+        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+        jdbcInsert.withTableName("a_users").usingGeneratedKeyColumns("id");
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("email", user.getEmail())
+                .addValue("login", user.getLogin())
+                .addValue("name", user.getName())
+                .addValue("birthday", user.getBirthday());
+        Number num = jdbcInsert.executeAndReturnKey(parameters);
+        user.setId(num.longValue());
+        /*
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(INSERT_QUERY, new String[] { "id" });
@@ -88,7 +99,7 @@ public class UserDbStorage implements UserStorage {
             ps.setDate(4, Date.valueOf(user.getBirthday()));
             return ps;
         }, keyHolder);
-        user.setId(keyHolder.getKey().longValue());
+        user.setId(keyHolder.getKey().longValue());*/
         log.info(LogMessage.USER_ADD.getMessage() + " {}", user.getId());
         return user;
     }

@@ -15,14 +15,5 @@ public interface FilmStorage {
     Collection<Film> getTopLikedFilms(int size);
     Optional<Film> getFilmById(long filmId);
     void removeFilmById(long filmId);
-    void putLike(long filmId, long userId);
-    void deleteLike(long filmId, long userId);
 
-    Collection<Mpa> getAllMpa();
-
-    Optional<Mpa> getMpaById(int id);
-
-    Collection<Genre> getAllGenres();
-
-    Optional<Genre> getGenreById(int id);
 }

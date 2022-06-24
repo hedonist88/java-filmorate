@@ -64,34 +64,4 @@ public class InMemoryFilmStorage implements FilmStorage {
             films.remove(filmId);
         }
     }
-
-    @Override
-    public void putLike(long filmId, long userId) {
-
-    }
-
-    @Override
-    public void deleteLike(long filmId, long userId) {
-
-    }
-
-    @Override
-    public Collection<Mpa> getAllMpa() {
-        return null;
-    }
-
-    @Override
-    public Optional<Mpa> getMpaById(int id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Collection<Genre> getAllGenres() {
-        return null;
-    }
-
-    @Override
-    public Optional<Genre> getGenreById(int id) {
-        return Optional.empty();
-    }
 }
