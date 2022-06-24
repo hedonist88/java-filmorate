@@ -9,8 +9,8 @@ public enum ErrorMessage {
     USER_NOT_REGISTER("User not registered"),
 
     FILMS_NOT_FOUND("Films list is empty"),
-    USERS_NOT_FOUND("Users list is empty"),
-
+    USERS_NOT_FOUND("Users list is empty OR user data error"),
+    MPA_NOT_FOUND("MPA not found"),
     /* User */
     EMPTY_EMAIL("The email address cannot be empty"),
     WRONG_EMAIL("Wrong email"),
@@ -23,7 +23,10 @@ public enum ErrorMessage {
     WRONG_FILM_NAME("Wrong film name"),
     WRONG_FILM_DESCR_LENGTH("Very long description from film"),
     WRONG_FILM_DURATION("Wrong film duration"),
-    WRONG_FILM_RELEASE_DATE("Wrong release date");
+    WRONG_FILM_RELEASE_DATE("Wrong release date"),
+    FILM_NOT_FOUND("Films not found"),
+    WRONG_FILM_MPA("Wrong film MPA"),
+    GENRE_NOT_FOUND("Genre not found");
 
     private final String message;
 

@@ -73,8 +73,13 @@ public class UserServiceImpl implements UserService {
     public User addFriend(long userId, long friendId){
         User user = findUserById(userId);
         User friend = findUserById(friendId);
-        user.getFriendsIds().put(friendId, FriendStatus.CONFIRMED);
-        friend.getFriendsIds().put(userId, FriendStatus.CONFIRMED);
+        if(user.getFriendsIds().containsKey(friend.getId())) {
+            userStorage.putFriendsRelation(userId, friendId, FriendStatus.CONFIRMED);
+            userStorage.putFriendsRelation(friendId, userId, FriendStatus.CONFIRMED);
+        } else {
+            userStorage.putFriendsRelation(userId, friendId, FriendStatus.CONFIRMED);
+            userStorage.putFriendsRelation(friendId, userId, FriendStatus.UNCONFIRMED);
+        }
         return user;
     }
 
@@ -82,8 +87,7 @@ public class UserServiceImpl implements UserService {
     public User removeFriend(long userId, long friendId){
         User user = findUserById(userId);
         User friend = findUserById(friendId);
-        user.getFriendsIds().remove(friendId);
-        friend.getFriendsIds().remove(userId);
+        userStorage.deleteFriendsRelation(userId, friendId);
         return user;
     }
 
@@ -91,7 +95,8 @@ public class UserServiceImpl implements UserService {
     public Collection<User> findUserFriends(long userId){
         User user = findUserById(userId);
         if(user.getFriendsIds().size() == 0){
-            throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
+            //throw new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage());
+            return Collections.emptyList();
         }
         return user.getFriendsIds().keySet()
                 .stream()

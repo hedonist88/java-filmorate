@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.helpers.ErrorMessage;
 import ru.yandex.practicum.filmorate.helpers.LogMessage;
 import ru.yandex.practicum.filmorate.interfaces.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -41,12 +43,12 @@ public class FilmServiceImpl implements FilmService {
         if(!validateFilm(film)){
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
-        if(filmStorage.getAllFilms().containsKey(film.getId())) {
+        if(film.getId() > 0 && filmStorage.getAllFilms().containsKey(film.getId())) {
             throw new FilmAlreadyExistException(ErrorMessage.FILM_IS_ALREADY.getMessage() + " " +
                     film.getId());
         }
         Film addFilm = filmStorage.add(film);
-            log.info(LogMessage.FILM_ADD.getMessage() + " {} {}", film.getName(), film.getId());
+        log.info(LogMessage.FILM_ADD.getMessage() + " {} {}", film.getName(), film.getId());
         return addFilm;
     }
 
@@ -56,9 +58,9 @@ public class FilmServiceImpl implements FilmService {
             throw new ValidationException(ErrorMessage.VALIDATE_ERROR.getMessage());
         }
         findFilmById(film.getId());
-        filmStorage.update(film);
+        Film updFilm = filmStorage.update(film);
         log.info(LogMessage.FILM_UPDATE.getMessage() + " {} {}", film.getName(), film.getId());
-        return film;
+        return updFilm;
     }
 
     @Override
@@ -80,7 +82,9 @@ public class FilmServiceImpl implements FilmService {
         userStorage.getUserById(userId).orElseThrow(
                 () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
         Film film = findFilmById(filmId);
-        film.getLikeUserIds().add(userId);
+        if(!film.getLikeUserIds().contains(userId)) {
+            filmStorage.putLike(filmId, userId);
+        }
         return film;
     }
 
@@ -89,10 +93,30 @@ public class FilmServiceImpl implements FilmService {
         userStorage.getUserById(userId).orElseThrow(
                 () -> new NotFoundException(ErrorMessage.USERS_NOT_FOUND.getMessage()));
         Film film = findFilmById(filmId);
-        if(!film.getLikeUserIds().contains(userId)){
-            film.getLikeUserIds().remove(userId);
+        if(film.getLikeUserIds().contains(userId)){
+            filmStorage.deleteLike(filmId, userId);
         }
         return film;
+    }
+
+    public Collection<Mpa> findAllMpa() {
+        return filmStorage.getAllMpa();
+    }
+
+    public Mpa findMpaById(int id){
+        return filmStorage.getMpaById(id).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.MPA_NOT_FOUND.getMessage()));
+    }
+
+    @Override
+    public Collection<Genre> findAllGenres() {
+        return filmStorage.getAllGenres();
+    }
+
+    @Override
+    public Genre findGenreById(int id) {
+        return filmStorage.getGenreById(id).orElseThrow(
+                () -> new NotFoundException(ErrorMessage.GENRE_NOT_FOUND.getMessage()));
     }
 
     private boolean validateFilm(Film film){
@@ -107,6 +131,10 @@ public class FilmServiceImpl implements FilmService {
         }
         if(film.getReleaseDate().isBefore(LocalDate.of(1895,12,28))){
             log.info(ErrorMessage.WRONG_FILM_RELEASE_DATE.getMessage() + " {} {}", film.getReleaseDate(), film.getId());
+            result = false;
+        }
+        if(film.getMpa() == null){
+            log.info(ErrorMessage.WRONG_FILM_MPA.getMessage() + " {}", film.getId());
             result = false;
         }
         return result;

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.interfaces.UserStorage;
+import ru.yandex.practicum.filmorate.model.FriendStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.HashMap;
@@ -46,5 +47,15 @@ public class InMemoryUserStorage implements UserStorage {
         if(users.containsKey(userId)){
             users.remove(userId);
         }
+    }
+
+    @Override
+    public void putFriendsRelation(long userId, long friendId, FriendStatus status) {
+
+    }
+
+    @Override
+    public void deleteFriendsRelation(long userId, long friendId) {
+
     }
 }
