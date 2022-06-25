@@ -33,17 +33,29 @@ public class FilmController {
     @GetMapping(value = "/{id}")
     public ResponseEntity<Film> findFilmById(@PathVariable(name = "id") long filmId)
     {
-        return ResponseEntity.ok(filmService.findFilmById(filmId));
+        Film film = filmService.findFilmById(filmId);
+        if(film.getGenres().size() == 0){
+            film.setGenres(null);
+        }
+        return ResponseEntity.ok(film);
     }
 
     @PostMapping
     public ResponseEntity<Film> create(@Valid @RequestBody Film film) {
-        return ResponseEntity.ok(filmService.addFilm(film));
+        Film addFilm = filmService.addFilm(film);
+        if(film.getGenres() == null){
+            addFilm.setGenres(null);
+        }
+        return ResponseEntity.ok(addFilm);
     }
 
     @PutMapping
     public ResponseEntity<Film> put(@Valid @RequestBody Film film) {
-        return ResponseEntity.ok(filmService.updateFilm(film));
+        Film updFilm = filmService.updateFilm(film);
+        if(film.getGenres() == null){
+            updFilm.setGenres(null);
+        }
+        return ResponseEntity.ok(updFilm);
     }
 
     @PutMapping(value = "/{id}/like/{userId}")
